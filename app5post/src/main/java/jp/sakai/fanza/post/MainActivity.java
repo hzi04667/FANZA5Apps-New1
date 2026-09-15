@@ -1,4 +1,168 @@
 package jp.sakai.fanza.post;
-import android.app.*;import android.os.*;import android.content.*;import android.graphics.Color;import android.net.Uri;import android.view.*;import android.widget.*;import java.text.*;import java.util.*;
-public class MainActivity extends Activity{EditText post,history;Uri image;final int PICK=7;public void onCreate(Bundle b){super.onCreate(b);ScrollView sv=new ScrollView(this);LinearLayout x=new LinearLayout(this);x.setOrientation(LinearLayout.VERTICAL);x.setPadding(32,28,32,28);x.addView(t("⑤ X投稿・履歴",24));x.addView(t("投稿はX公式画面で最終確認してください。『投稿済みとして履歴保存』は、Xで投稿した後に押します。",15));post=e("X投稿文");post.setMinLines(8);x.addView(post);Button p=btn("クリップボードから文を貼付");p.setOnClickListener(v->paste());x.addView(p);Button i=btn("ダウンロードした画像を選ぶ");i.setOnClickListener(v->pick());x.addView(i);Button send=btn("X投稿画面を開く");send.setOnClickListener(v->send());x.addView(send);Button save=btn("投稿済みとして履歴保存");save.setOnClickListener(v->save());x.addView(save);x.addView(t("投稿履歴",20));history=e("");history.setFocusable(false);history.setMinLines(8);x.addView(history);Button clear=btn("履歴を全削除");clear.setOnClickListener(v->confirmClear());x.addView(clear);sv.addView(x);setContentView(sv);getWindow().setStatusBarColor(Color.rgb(216,27,96));showHistory();}
-TextView t(String s,int z){TextView v=new TextView(this);v.setText(s);v.setTextSize(z);v.setPadding(0,10,0,10);return v;}EditText e(String h){EditText v=new EditText(this);v.setHint(h);v.setTextSize(16);return v;}Button btn(String s){Button b=new Button(this);b.setText(s);b.setTextSize(16);return b;}void paste(){ClipboardManager m=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);if(m.hasPrimaryClip())post.setText(m.getPrimaryClip().getItemAt(0).coerceToText(this));else toast("コピーされた投稿文がありません");}void pick(){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/*");i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,PICK);}@Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==PICK&&c==RESULT_OK&&d!=null){image=d.getData();try{getContentResolver().takePersistableUriPermission(image,Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}toast("画像を選びました");}}void send(){String s=post.getText().toString().trim();if(s.isEmpty()){toast("投稿文を貼り付けてください");return;}Intent i=new Intent(Intent.ACTION_SEND);i.setType(image==null?"text/plain":"image/*");i.putExtra(Intent.EXTRA_TEXT,s);if(image!=null){i.putExtra(Intent.EXTRA_STREAM,image);i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);}i.setPackage("com.twitter.android");try{startActivity(i);}catch(Exception e){i.setPackage(null);startActivity(Intent.createChooser(i,"Xで投稿"));}}void save(){String s=post.getText().toString().trim();if(s.isEmpty()){toast("投稿文がありません");return;}String old=getPreferences(0).getString("history","");String date=new SimpleDateFormat("yyyy/MM/dd HH:mm",Locale.JAPAN).format(new Date());String title=s.split("\n")[0];String next=date+"  "+title+"\n"+old;getPreferences(0).edit().putString("history",next).apply();showHistory();toast("履歴へ保存しました");}void showHistory(){history.setText(getPreferences(0).getString("history","まだ履歴はありません"));}void confirmClear(){new AlertDialog.Builder(this).setTitle("履歴を全削除しますか？").setMessage("削除後は元に戻せません。").setNegativeButton("やめる",null).setPositiveButton("削除",(d,w)->{getPreferences(0).edit().remove("history").apply();showHistory();}).show();}void toast(String s){Toast.makeText(this,s,Toast.LENGTH_LONG).show();}}
+
+import android.app.*;
+import android.os.*;
+import android.content.*;
+import android.graphics.Color;
+import android.net.Uri;
+import android.view.*;
+import android.widget.*;
+import java.text.*;
+import java.util.*;
+
+public class MainActivity extends Activity {
+    EditText post, history;
+    Uri image;
+    final int PICK = 7;
+
+    public void onCreate(Bundle b) {
+        super.onCreate(b);
+        ScrollView sv = new ScrollView(this);
+        LinearLayout x = new LinearLayout(this);
+        x.setOrientation(LinearLayout.VERTICAL);
+        x.setPadding(32, 28, 32, 28);
+        x.addView(t("⑤ X投稿・履歴", 24));
+        x.addView(t("投稿はX公式画面で最終確認してください。『投稿済みとして履歴保存』は、Xで投稿した後に押します。", 15));
+        post = e("X投稿文");
+        post.setMinLines(8);
+        x.addView(post);
+        Button p = btn("クリップボードから文を貼付");
+        p.setOnClickListener(v -> paste());
+        x.addView(p);
+        Button i = btn("ダウンロードした画像を選ぶ");
+        i.setOnClickListener(v -> pick());
+        x.addView(i);
+        Button send = btn("X投稿画面を開く");
+        send.setOnClickListener(v -> send());
+        x.addView(send);
+        Button save = btn("投稿済みとして履歴保存");
+        save.setOnClickListener(v -> save());
+        x.addView(save);
+        x.addView(t("投稿履歴", 20));
+        history = e("");
+        history.setFocusable(false);
+        history.setMinLines(8);
+        x.addView(history);
+        Button clear = btn("履歴を全削除");
+        clear.setOnClickListener(v -> confirmClear());
+        x.addView(clear);
+        sv.addView(x);
+        setContentView(sv);
+        getWindow().setStatusBarColor(Color.rgb(216, 27, 96));
+        showHistory();
+    }
+
+    TextView t(String s, int z) {
+        TextView v = new TextView(this);
+        v.setText(s);
+        v.setTextSize(z);
+        v.setPadding(0, 10, 0, 10);
+        return v;
+    }
+
+    EditText e(String h) {
+        EditText v = new EditText(this);
+        v.setHint(h);
+        v.setTextSize(16);
+        return v;
+    }
+
+    Button btn(String s) {
+        Button b = new Button(this);
+        b.setText(s);
+        b.setTextSize(16);
+        return b;
+    }
+
+    void paste() {
+        ClipboardManager m = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (m.hasPrimaryClip()) post.setText(m.getPrimaryClip().getItemAt(0).coerceToText(this));
+        else toast("コピーされた投稿文がありません");
+    }
+
+    void pick() {
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.setType("image/*");
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(i, PICK);
+    }
+
+    @Override protected void onActivityResult(int r, int c, Intent d) {
+        super.onActivityResult(r, c, d);
+        if (r == PICK && c == RESULT_OK && d != null) {
+            image = d.getData();
+            try {
+                getContentResolver().takePersistableUriPermission(
+                    image, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                );
+            } catch (Exception ignored) {}
+            toast("画像を選びました");
+        }
+    }
+
+    void send() {
+        String s = post.getText().toString().trim();
+        if (s.isEmpty()) {
+            toast("投稿文を貼り付けてください");
+            return;
+        }
+
+        Intent i = new Intent(Intent.ACTION_SEND);
+        i.putExtra(Intent.EXTRA_TEXT, s);
+
+        if (image != null) {
+            String mime = getContentResolver().getType(image);
+            i.setType(mime == null ? "image/jpeg" : mime);
+            i.putExtra(Intent.EXTRA_STREAM, image);
+
+            // Xが投稿完了まで画像を読めるよう、URIと権限を明示的に渡す。
+            i.setClipData(ClipData.newUri(getContentResolver(), "X投稿画像", image));
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } else {
+            i.setType("text/plain");
+        }
+
+        i.setPackage("com.twitter.android");
+        try {
+            startActivity(i);
+        } catch (Exception e) {
+            i.setPackage(null);
+            startActivity(Intent.createChooser(i, "Xで投稿"));
+        }
+    }
+
+    void save() {
+        String s = post.getText().toString().trim();
+        if (s.isEmpty()) {
+            toast("投稿文がありません");
+            return;
+        }
+        String old = getPreferences(0).getString("history", "");
+        String date = new SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.JAPAN).format(new Date());
+        String title = s.split("\n")[0];
+        String next = date + "  " + title + "\n" + old;
+        getPreferences(0).edit().putString("history", next).apply();
+        showHistory();
+        toast("履歴へ保存しました");
+    }
+
+    void showHistory() {
+        history.setText(getPreferences(0).getString("history", "まだ履歴はありません"));
+    }
+
+    void confirmClear() {
+        new AlertDialog.Builder(this)
+            .setTitle("履歴を全削除しますか？")
+            .setMessage("削除後は元に戻せません。")
+            .setNegativeButton("やめる", null)
+            .setPositiveButton("削除", (d, w) -> {
+                getPreferences(0).edit().remove("history").apply();
+                showHistory();
+            })
+            .show();
+    }
+
+    void toast(String s) {
+        Toast.makeText(this, s, Toast.LENGTH_LONG).show();
+    }
+}
