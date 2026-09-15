@@ -29,10 +29,8 @@ public class MainActivity extends Activity {
         Button p = btn("クリップボードから文を貼付");
         p.setOnClickListener(v -> paste());
         x.addView(p);
-        Button i = btn("ダウンロードした画像を選ぶ");
-        i.setOnClickListener(v -> pick());
-        x.addView(i);
-        Button send = btn("X投稿画面を開く");
+        x.addView(t("画像はX投稿画面で、fanza_official_〜.jpgを選んでください。", 15));
+        Button send = btn("投稿文をXへ渡す");
         send.setOnClickListener(v -> send());
         x.addView(send);
         Button save = btn("投稿済みとして履歴保存");
@@ -108,20 +106,8 @@ public class MainActivity extends Activity {
         }
 
         Intent i = new Intent(Intent.ACTION_SEND);
+        i.setType("text/plain");
         i.putExtra(Intent.EXTRA_TEXT, s);
-
-        if (image != null) {
-            String mime = getContentResolver().getType(image);
-            i.setType(mime == null ? "image/jpeg" : mime);
-            i.putExtra(Intent.EXTRA_STREAM, image);
-
-            // Xが投稿完了まで画像を読めるよう、URIと権限を明示的に渡す。
-            i.setClipData(ClipData.newUri(getContentResolver(), "X投稿画像", image));
-            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } else {
-            i.setType("text/plain");
-        }
-
         i.setPackage("com.twitter.android");
         try {
             startActivity(i);
