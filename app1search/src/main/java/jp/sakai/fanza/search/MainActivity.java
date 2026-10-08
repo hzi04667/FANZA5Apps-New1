@@ -3,6 +3,9 @@ package jp.sakai.fanza.search;
 
 import android.app.Activity;
 import android.os.Bundle;
+
+import android.net.Uri;
+
 import android.content.*;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
